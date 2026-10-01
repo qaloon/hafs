@@ -1,0 +1,6 @@
+# مصحف المدينة - رواية حفص
+User-agent: *
+Allow: /
+Disallow: /data/*.example.json
+
+Sitemap: https://hafs.qurancomplex.ly/sitemap.xml

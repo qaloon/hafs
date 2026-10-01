@@ -1,0 +1,44 @@
+{
+  "name": "مصحف المدينة - رواية حفص",
+  "short_name": "مصحف المدينة - ر",
+  "description": "المصحف الرقمي الحديث برواية حفص عن عاصم، تجربة قراءة سلسة ومتوافقة مع كافة الأجهزة.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#064E3B",
+  "categories": [
+    "books",
+    "education",
+    "reference"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الفهرس",
+      "short_name": "الفهرس",
+      "url": "./index.html#/index"
+    },
+    {
+      "name": "آخر موضع قراءة",
+      "short_name": "متابعة",
+      "url": "./index.html#/resume"
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مصحف المدينة - رواية حفص</title>
+<meta name="description" content="المصحف الرقمي الحديث برواية حفص عن عاصم، تجربة قراءة سلسة ومتوافقة مع كافة الأجهزة.">
+
+<!-- التثبيت كتطبيق: ملف PWA مستقل -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#064E3B">
+<meta name="color-scheme" content="dark light">
+
+<!-- أيقونات وتجهيزات الهواتف -->
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مصحف المدينة - رواية حفص">
+
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2b; --panel-2:#16223a; --line:#22304d;
+    --fg:#e8eefb; --muted:#93a2c0; --accent:#064E3B; --accent-2:#fdfbf7;
+    --radius:14px; --hud-h:64px;
+    --page-ratio:1.45;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f7fb; --panel:#ffffff; --panel-2:#eef2f9; --line:#d9e1ee;
+    --fg:#101a2b; --muted:#5b6b86; color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:system-ui,"Segoe UI",Tahoma,"Noto Naskh Arabic",serif;
+    -webkit-text-size-adjust:100%;
+  }
+
+  /* ---------- الشريط العلوي ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
+    background:color-mix(in srgb, var(--panel) 88%, transparent);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+  }
+  @supports not (color: color-mix(in srgb, red, blue)){
+    .topbar{background:var(--panel)}
+  }
+  .brand{display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px}
+  .brand svg{width:26px;height:26px;border-radius:7px}
+  .spacer{flex:1}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--panel-2); color:var(--fg);
+    border:1px solid var(--line); border-radius:10px;
+    padding:8px 12px; font-size:14px; font-family:inherit; cursor:pointer;
+    transition: all 0.2s ease;
+  }
+  .btn:hover{border-color:var(--accent-2)}
+  .btn[aria-pressed="true"]{border-color:var(--accent-2); color:var(--accent-2)}
+
+  /* شارة الحالة */
+  .net{
+    font-size:12px; padding:5px 9px; border-radius:999px;
+    border:1px solid var(--line); color:var(--muted);
+  }
+  .net.off{color:#f0b429; border-color:#f0b429}
+  .net.on{color:var(--accent-2); border-color:var(--accent-2)}
+
+  /* ---------- صفحات القراءة ---------- */
+  .pages{
+    scroll-snap-type:y mandatory;
+    overflow-y:auto; height:calc(100dvh - var(--hud-h));
+    padding:0; margin:0; list-style:none;
+    overscroll-behavior-y:contain;
+  }
+  .page{
+    scroll-snap-align:start; scroll-snap-stop:always;
+    display:grid; place-items:center;
+    padding:10px 10px 24px;
+  }
+  .page-inner{
+    width:100%; max-width:760px;
+    aspect-ratio:1 / var(--page-ratio);
+    background:var(--panel-2);
+    border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; position:relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .page-inner img{width:100%;height:100%;object-fit:contain;display:block}
+  .page-num{
+    position:absolute; inset-inline-end:12px; bottom:10px;
+    font-size:12px; color:var(--muted);
+    background:color-mix(in srgb, var(--panel) 85%, transparent);
+    padding:3px 10px; border-radius:999px;
+    border:1px solid var(--line);
+  }
+
+  /* ---------- شريط سفلي عائم ---------- */
+  .hud{
+    position:fixed; inset-inline:0; bottom:0; height:var(--hud-h);
+    padding-bottom:env(safe-area-inset-bottom);
+    display:flex; align-items:center; gap:8px; padding-inline:12px;
+    background:color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter:blur(10px); border-top:1px solid var(--line); z-index:30;
+  }
+  .hud .jump{flex:1; display:flex; align-items:center; gap:8px}
+  .hud input[type="number"]{
+    width:84px; padding:8px; border-radius:10px; text-align:center;
+    background:var(--panel-2); color:var(--fg); border:1px solid var(--line);
+    font-family:inherit;
+  }
+  .track{
+    position:fixed; inset-inline:0; bottom:var(--hud-h); height:3px;
+    background:transparent; z-index:31;
+  }
+  .track > i{display:block; height:100%; width:0; background:var(--accent-2); transition: width 0.2s ease;}
+
+  /* ---------- درج الفهرس ---------- */
+  .drawer{
+    position:fixed; inset:0; z-index:40; display:none;
+  }
+  .drawer[open]{display:block}
+  .drawer .scrim{position:absolute; inset:0; background:#0009}
+  .drawer .sheet{
+    position:absolute; inset-inline-end:0; top:0; bottom:0;
+    width:min(420px,92vw); background:var(--panel);
+    border-inline-start:1px solid var(--line);
+    display:flex; flex-direction:column;
+    box-shadow: -4px 0 25px rgba(0,0,0,0.5);
+  }
+  .sheet header{padding:14px; border-bottom:1px solid var(--line)}
+  .tabs{display:flex; gap:6px; margin-top:10px}
+  .tab{
+    flex:1; padding:8px; border-radius:10px; cursor:pointer; text-align:center;
+    background:var(--panel-2); border:1px solid var(--line); font-size:13px;
+  }
+  .tab[aria-selected="true"]{border-color:var(--accent-2); color:var(--accent-2); font-weight: bold;}
+  .search{
+    width:100%; margin-top:10px; padding:10px 12px; border-radius:10px;
+    background:var(--panel-2); color:var(--fg); border:1px solid var(--line);
+    font-family:inherit; font-size:15px;
+  }
+  .sheet .body{overflow:auto; padding:10px 14px 24px; flex:1}
+  .row{
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+    padding:11px 10px; border-radius:10px; cursor:pointer;
+    border-bottom:1px solid color-mix(in srgb, var(--line) 60%, transparent);
+    transition: background 0.15s ease;
+  }
+  .row:hover{background:var(--panel-2)}
+  .row .p{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(56px,1fr)); gap:8px}
+  .grid button{
+    padding:10px 0; border-radius:10px; cursor:pointer; font-variant-numeric:tabular-nums;
+    background:var(--panel-2); color:var(--fg); border:1px solid var(--line);
+    font-family:inherit;
+  }
+  .grid button:hover{border-color:var(--accent-2)}
+  .empty{color:var(--muted); text-align:center; padding:24px 0; font-size:14px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+
+<body>
+  <header class="topbar">
+    <span class="brand">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#fdfbf7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g1)"/>
+  <rect x="12" y="12" width="104" height="104" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.15" stroke-width="2"/>
+  <g transform="translate(24, 24)" filter="url(#shadow)">
+    <!-- كتاب مفتوح هندسي فاخر -->
+    <path d="M40 18 C28 12, 10 14, 4 16 L4 64 C12 62, 28 60, 40 66 C52 60, 68 62, 76 64 L76 16 C70 14, 52 12, 40 18 Z" fill="#ffffff" fill-opacity="0.95"/>
+    <path d="M40 18 L40 66" stroke="#064E3B" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- زخرفة داخلية -->
+    <path d="M12 28 C20 26, 30 27, 34 30 M12 38 C20 36, 30 37, 34 40 M12 48 C20 46, 30 47, 34 50" stroke="#064E3B" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+    <path d="M68 28 C60 26, 50 27, 46 30 M68 38 C60 36, 50 37, 46 40 M68 48 C60 46, 50 47, 46 50" stroke="#064E3B" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
+      <span>مصحف المدينة - رواية حفص</span>
+    </span>
+    <span class="spacer"></span>
+    <span id="net" class="net" role="status" aria-live="polite">…</span>
+    <button class="btn" id="themeBtn" title="تبديل الوضع">🌓</button>
+    <button class="btn" id="indexBtn" aria-haspopup="dialog">الفهرس</button>
+  </header>
+
+  <main id="pages" class="pages" aria-label="صفحات الكتاب"></main>
+
+  <div class="track" aria-hidden="true"><i id="trackBar"></i></div>
+
+  <footer class="hud">
+    <button class="btn" id="prevBtn" title="السابق">‹</button>
+    <button class="btn" id="nextBtn" title="التالي">›</button>
+    <div class="jump">
+      <span class="sr">رقم الصفحة</span>
+      <input id="pageInput" type="number" inputmode="numeric" min="1" placeholder="صفحة">
+      <button class="btn" id="goBtn">انتقال</button>
+    </div>
+    <button class="btn" id="offlineBtn" title="حفظ للقراءة بلا إنترنت">⤓ حفظ</button>
+    <button class="btn" id="playBtn" title="الاستماع">▶</button>
+  </footer>
+
+  <!-- درج الفهرس -->
+  <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="فهرس الكتاب">
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <header>
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong id="bookTitle">مصحف المدينة - رواية حفص</strong><span class="spacer"></span>
+          <button class="btn" data-close>إغلاق</button>
+        </div>
+        <input id="search" class="search" type="search" placeholder="ابحث: اسم السورة / الباب · 18 · ١٨">
+        <div class="tabs" role="tablist">
+          <div class="tab" role="tab" data-tab="surah" aria-selected="true">الفهرس</div>
+          <div class="tab" role="tab" data-tab="juz" aria-selected="false">الأجزاء</div>
+          <div class="tab" role="tab" data-tab="pages" aria-selected="false">الصفحات</div>
+        </div>
+      </header>
+      <div class="body" id="drawerBody"></div>
+    </div>
+  </div>
+
+  <noscript>
+    <p style="padding:20px">هذا التطبيق يحتاج تفعيل JavaScript لعرض الصفحات والفهارس.</p>
+  </noscript>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

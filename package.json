@@ -1,0 +1,11 @@
+{
+  "name": "مصحف-المدينة---رواية-حفص",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "المصحف الرقمي الحديث برواية حفص عن عاصم، تجربة قراءة سلسة ومتوافقة مع كافة الأجهزة.",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "serve": "npx serve ."
+  }
+}
